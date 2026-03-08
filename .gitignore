@@ -31,6 +31,25 @@ serviceAccountKey.json
 
 .DS_Store
 Thumbs.db
+Thumbs.db:encryptablemetadata
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
 .vscode/
 .idea/
 *.log
+logs/
+*.tmp
+*.temp
+*.swp
+*.swo
+
+docker-compose.override.yml
+docker-compose.local.yml
+
+.github/runner/
+
+build/reports/
+coverage/
+*.lcov
