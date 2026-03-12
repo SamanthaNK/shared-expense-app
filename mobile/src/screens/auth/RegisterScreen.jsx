@@ -1,19 +1,24 @@
 import {
-    View, Text, StyleSheet, TextInput, TouchableOpacity,
-    KeyboardAvoidingView, Platform, StatusBar,
-    ActivityIndicator, Alert, ScrollView
+    View, Text, StyleSheet, TouchableOpacity,
+    KeyboardAvoidingView, Platform, StatusBar, ScrollView, Alert,
 } from 'react-native';
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { registerUser } from '../../services/authService';
+import PaperBackground from '../../components/PaperBackground';
+import PrimaryButton from '../../components/PrimaryButton';
+import StyledInput from '../../components/StyledInput';
+import StickyNoteCard from '../../components/StickyNoteCard';
+import { colors, fonts } from '../../constants/theme';
 
 export default function RegisterScreen({ navigation }) {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
     const { login } = useAuth();
 
     const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
@@ -21,25 +26,24 @@ export default function RegisterScreen({ navigation }) {
 
     const handleRegister = async () => {
         if (!name || !email || !password || !confirmPassword) {
-            Alert.alert('Missing Fields', 'Please fill in all fields.');
+            Alert.alert('Please fill in all fields.');
             return;
         }
         if (password !== confirmPassword) {
-            Alert.alert('Password Mismatch', 'Your passwords do not match.');
+            Alert.alert('Password mismatch', 'Your passwords do not match.');
             return;
         }
         if (password.length < 8) {
-            Alert.alert('Password Too Short', 'Password must be at least 8 characters.');
+            Alert.alert('Password too short', 'Password must be at least 8 characters.');
             return;
         }
-
         setLoading(true);
         try {
             const data = await registerUser(name.trim(), email.trim().toLowerCase(), password);
             await login(data.token, { name: data.name, email: data.email });
         } catch (error) {
             Alert.alert(
-                'Registration Failed',
+                'Registration failed',
                 error.response?.data?.message || 'Something went wrong. Please try again.'
             );
         } finally {
@@ -48,252 +52,169 @@ export default function RegisterScreen({ navigation }) {
     };
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-            <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
-            <ScrollView
-                contentContainerStyle={styles.scroll}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
+        <PaperBackground>
+            <StatusBar barStyle="dark-content" backgroundColor={colors.paper} />
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-                {/* Back */}
-                <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-                    <Text style={styles.backText}>BACK</Text>
-                </TouchableOpacity>
+                <ScrollView
+                    contentContainerStyle={styles.scroll}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+                        <Ionicons name="arrow-back-outline" size={20} color={colors.inkMid} />
+                        <Text style={styles.backText}>Back</Text>
+                    </TouchableOpacity>
 
-                {/* Header */}
-                <View style={styles.header}>
-                    <Text style={styles.brand}>PAYBUDDY</Text>
-                    <Text style={styles.title}>CREATE{'\n'}ACCOUNT.</Text>
-                </View>
+                    <Text style={styles.title}>Create{'\n'}account.</Text>
 
-                {/* Form */}
-                <View style={styles.form}>
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>FULL NAME</Text>
-                        <TextInput
-                            style={styles.input}
+                    <StickyNoteCard style={styles.card}>
+                        <StyledInput
+                            label="Full Name"
                             placeholder="Your name"
-                            placeholderTextColor="#333"
                             value={name}
                             onChangeText={setName}
                             autoCapitalize="words"
                         />
-                    </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>EMAIL</Text>
-                        <TextInput
-                            style={styles.input}
+                        <StyledInput
+                            label="Email"
                             placeholder="your@email.com"
-                            placeholderTextColor="#333"
                             value={email}
                             onChangeText={setEmail}
                             keyboardType="email-address"
                             autoCapitalize="none"
                             autoCorrect={false}
                         />
-                    </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>PASSWORD</Text>
-                        <View style={styles.passwordRow}>
-                            <TextInput
-                                style={[styles.input, { flex: 1 }]}
-                                placeholder="Min 8 characters"
-                                placeholderTextColor="#333"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry={!showPassword}
-                            />
-                            <TouchableOpacity
-                                style={styles.showBtn}
-                                onPress={() => setShowPassword(!showPassword)}
-                            >
-                                <Text style={styles.showBtnText}>
-                                    {showPassword ? 'HIDE' : 'SHOW'}
-                                </Text>
-                            </TouchableOpacity>
+                        <View>
+                            <Text style={styles.fieldLabel}>Password</Text>
+                            <View style={styles.passwordRow}>
+                                <StyledInput
+                                    placeholder="Min 8 characters"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry={!showPassword}
+                                    style={{ flex: 1 }}
+                                />
+                                <TouchableOpacity
+                                    style={styles.eyeBtn}
+                                    onPress={() => setShowPassword(!showPassword)}
+                                >
+                                    <Ionicons
+                                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                                        size={18}
+                                        color={colors.inkMid}
+                                    />
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>CONFIRM PASSWORD</Text>
-                        <TextInput
-                            style={[
-                                styles.input,
-                                passwordsMatch && styles.inputSuccess,
-                                passwordsMismatch && styles.inputError,
-                            ]}
+                        <StyledInput
+                            label="Confirm Password"
                             placeholder="Repeat password"
-                            placeholderTextColor="#333"
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}
                             secureTextEntry={!showPassword}
+                            inputStyle={
+                                passwordsMatch
+                                    ? { borderColor: colors.success }
+                                    : passwordsMismatch
+                                        ? { borderColor: colors.error }
+                                        : {}
+                            }
+                            hint={passwordsMatch ? 'Passwords match' : undefined}
+                            error={passwordsMismatch ? 'Passwords do not match' : undefined}
                         />
-                        {passwordsMatch && <Text style={styles.matchText}>PASSWORDS MATCH</Text>}
-                        {passwordsMismatch && <Text style={styles.errorText}>PASSWORDS DO NOT MATCH</Text>}
-                    </View>
+                    </StickyNoteCard>
 
-                    <TouchableOpacity
-                        style={[styles.button, loading && styles.buttonDisabled]}
+                    <PrimaryButton
+                        label="Create Account"
                         onPress={handleRegister}
-                        disabled={loading}
-                        activeOpacity={0.85}
-                    >
-                        {loading
-                            ? <ActivityIndicator color="#0A0A0A" />
-                            : <Text style={styles.buttonText}>CREATE ACCOUNT</Text>
-                        }
-                    </TouchableOpacity>
+                        loading={loading}
+                        style={styles.cta}
+                    />
 
-                    <TouchableOpacity
-                        style={styles.loginLink}
-                        onPress={() => navigation.navigate('Login')}
-                    >
+                    <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
                         <Text style={styles.loginLinkText}>
-                            ALREADY HAVE AN ACCOUNT?{' '}
-                            <Text style={styles.loginLinkAccent}>SIGN IN</Text>
+                            Already have an account?{' '}
+                            <Text style={styles.loginLinkAccent}>Sign In</Text>
                         </Text>
                     </TouchableOpacity>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </PaperBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#0A0A0A',
-    },
     scroll: {
         flexGrow: 1,
-        paddingHorizontal: 28,
-        paddingTop: 60,
+        paddingHorizontal: 26,
+        paddingTop: 56,
         paddingBottom: 40,
     },
     backBtn: {
-        marginBottom: 32,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        alignSelf: 'flex-start',
+        marginBottom: 28,
     },
     backText: {
-        color: '#444',
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 2,
-    },
-    header: {
-        marginBottom: 40,
-    },
-    brand: {
-        color: '#F5F500',
-        fontSize: 11,
-        fontWeight: '900',
-        letterSpacing: 4,
-        marginBottom: 20,
+        fontFamily: fonts.regular,
+        fontSize: 18,
+        color: colors.inkMid,
     },
     title: {
-        color: '#FFFFFF',
-        fontSize: 52,
-        fontWeight: '900',
-        lineHeight: 54,
-        letterSpacing: -2,
-        marginBottom: 12,
+        fontFamily: fonts.bold,
+        fontSize: 48,
+        color: colors.ink,
+        lineHeight: 50,
+        letterSpacing: -0.5,
+        marginBottom: 6,
     },
-    subtitle: {
-        color: '#555',
+    card: {
+        gap: 14,
+        marginBottom: 6,
+    },
+    fieldLabel: {
+        fontFamily: fonts.bold,
         fontSize: 15,
-    },
-    form: {
-        gap: 20,
-    },
-    inputGroup: {
-        gap: 8,
-    },
-    label: {
-        color: '#444',
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 2,
-    },
-    input: {
-        backgroundColor: '#141414',
-        borderWidth: 1,
-        borderColor: '#222',
-        borderRadius: 4,
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        color: '#FFFFFF',
-        fontSize: 15,
-    },
-    inputSuccess: {
-        borderColor: '#22C55E',
-    },
-    inputError: {
-        borderColor: '#EF4444',
-    },
-    matchText: {
-        color: '#22C55E',
-        fontSize: 9,
-        fontWeight: '800',
-        letterSpacing: 1.5,
-        marginTop: 4,
-    },
-    errorText: {
-        color: '#EF4444',
-        fontSize: 9,
-        fontWeight: '800',
-        letterSpacing: 1.5,
-        marginTop: 4,
+        color: colors.inkMid,
+        letterSpacing: 0.6,
+        textTransform: 'uppercase',
+        marginBottom: 5,
     },
     passwordRow: {
         flexDirection: 'row',
+        alignItems: 'center',
         gap: 8,
-        alignItems: 'center',
     },
-    showBtn: {
-        backgroundColor: '#141414',
-        borderWidth: 1,
-        borderColor: '#222',
-        borderRadius: 4,
-        paddingHorizontal: 14,
-        paddingVertical: 16,
+    eyeBtn: {
+        padding: 9,
+        backgroundColor: colors.porcelain,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: colors.border,
     },
-    showBtnText: {
-        color: '#555',
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 1,
-    },
-    button: {
-        backgroundColor: '#F5F500',
-        borderRadius: 4,
-        paddingVertical: 18,
-        alignItems: 'center',
-        marginTop: 4,
-    },
-    buttonDisabled: {
-        opacity: 0.5,
-    },
-    buttonText: {
-        color: '#0A0A0A',
-        fontSize: 13,
-        fontWeight: '900',
-        letterSpacing: 3,
+    cta: {
+        marginTop: 18,
+        marginBottom: 14,
     },
     loginLink: {
         alignItems: 'center',
         paddingVertical: 4,
     },
     loginLinkText: {
-        color: '#333',
-        fontSize: 10,
-        fontWeight: '700',
-        letterSpacing: 1.5,
+        fontFamily: fonts.regular,
+        fontSize: 18,
+        color: colors.inkMid,
     },
     loginLinkAccent: {
-        color: '#F5F500',
+        fontFamily: fonts.bold,
+        color: colors.accent,
     },
 });

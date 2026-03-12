@@ -1,32 +1,36 @@
 import {
-    View, Text, StyleSheet, TextInput, TouchableOpacity,
-    KeyboardAvoidingView, Platform, StatusBar,
-    ActivityIndicator, Alert, ScrollView
+    View, Text, StyleSheet, TouchableOpacity,
+    KeyboardAvoidingView, Platform, StatusBar, ScrollView, Alert,
 } from 'react-native';
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { loginUser } from '../../services/authService';
+import PaperBackground from '../../components/PaperBackground';
+import PrimaryButton from '../../components/PrimaryButton';
+import StyledInput from '../../components/StyledInput';
+import StickyNoteCard from '../../components/StickyNoteCard';
+import { colors, fonts } from '../../constants/theme';
 
 export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
     const { login } = useAuth();
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert('Missing Fields', 'Please fill in all fields before continuing.');
+            Alert.alert('Please fill in all fields.');
             return;
         }
-
         setLoading(true);
         try {
             const data = await loginUser(email.trim().toLowerCase(), password);
             await login(data.token, { name: data.name, email: data.email });
         } catch (error) {
             Alert.alert(
-                'Login Failed',
+                'Login failed',
                 error.response?.data?.message || 'Something went wrong. Please try again.'
             );
         } finally {
@@ -35,224 +39,162 @@ export default function LoginScreen({ navigation }) {
     };
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-            <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
-            <ScrollView
-                contentContainerStyle={styles.scroll}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
+        <PaperBackground>
+            <StatusBar barStyle="dark-content" backgroundColor={colors.paper} />
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-                <View style={styles.header}>
-                    <Text style={styles.brand}>PAYBUDDY</Text>
-                    <Text style={styles.title}>SIGN{'\n'}IN.</Text>
-                </View>
+                <ScrollView
+                    contentContainerStyle={styles.scroll}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+                        <Ionicons name="arrow-back-outline" size={20} color={colors.inkMid} />
+                        <Text style={styles.backText}>Back</Text>
+                    </TouchableOpacity>
 
-                <View style={styles.form}>
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>EMAIL</Text>
-                        <TextInput
-                            style={styles.input}
+                    <Text style={styles.title}>Welcome{'\n'}back!</Text>
+
+                    <StickyNoteCard style={styles.card}>
+                        <StyledInput
+                            label="Email"
                             placeholder="your@email.com"
-                            placeholderTextColor="#333"
                             value={email}
                             onChangeText={setEmail}
                             keyboardType="email-address"
                             autoCapitalize="none"
                             autoCorrect={false}
                         />
-                    </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>PASSWORD</Text>
-                        <View style={styles.passwordRow}>
-                            <TextInput
-                                style={[styles.input, { flex: 1 }]}
-                                placeholder="••••••••"
-                                placeholderTextColor="#333"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry={!showPassword}
-                            />
-                            <TouchableOpacity
-                                style={styles.showBtn}
-                                onPress={() => setShowPassword(!showPassword)}
-                            >
-                                <Text style={styles.showBtnText}>
-                                    {showPassword ? 'HIDE' : 'SHOW'}
-                                </Text>
-                            </TouchableOpacity>
+                        <View>
+                            <Text style={styles.fieldLabel}>Password</Text>
+                            <View style={styles.passwordRow}>
+                                <StyledInput
+                                    placeholder="Min 8 characters"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry={!showPassword}
+                                    style={{ flex: 1 }}
+                                />
+                                <TouchableOpacity
+                                    style={styles.eyeBtn}
+                                    onPress={() => setShowPassword(!showPassword)}
+                                >
+                                    <Ionicons
+                                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                                        size={18}
+                                        color={colors.inkMid}
+                                    />
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    </View>
 
-                    <TouchableOpacity
-                        style={styles.forgotBtn}
-                        onPress={() => navigation.navigate('ForgotPassword')}
-                    >
-                        <Text style={styles.forgotText}>FORGOT PASSWORD?</Text>
-                    </TouchableOpacity>
+                        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                            <Text style={styles.forgotText}>Forgot password?</Text>
+                        </TouchableOpacity>
+                    </StickyNoteCard>
 
-                    <TouchableOpacity
-                        style={[styles.button, loading && styles.buttonDisabled]}
+                    <PrimaryButton
+                        label="Sign In"
                         onPress={handleLogin}
-                        disabled={loading}
-                        activeOpacity={0.85}
-                    >
-                        {loading
-                            ? <ActivityIndicator color="#0A0A0A" />
-                            : <Text style={styles.buttonText}>SIGN IN</Text>
-                        }
-                    </TouchableOpacity>
+                        loading={loading}
+                        style={styles.cta}
+                    />
 
                     <View style={styles.divider}>
                         <View style={styles.dividerLine} />
-                        <Text style={styles.dividerText}>OR</Text>
+                        <Text style={styles.dividerText}>or</Text>
                         <View style={styles.dividerLine} />
                     </View>
 
-                    <TouchableOpacity
-                        style={styles.secondaryButton}
+                    <PrimaryButton
+                        label="Create an account"
+                        variant="outline"
                         onPress={() => navigation.navigate('Register')}
-                        activeOpacity={0.85}
-                    >
-                        <Text style={styles.secondaryButtonText}>CREATE AN ACCOUNT</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                    />
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </PaperBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#0A0A0A',
-    },
     scroll: {
         flexGrow: 1,
-        paddingHorizontal: 28,
-        paddingTop: 70,
+        paddingHorizontal: 26,
+        paddingTop: 56,
         paddingBottom: 40,
     },
-    header: {
-        marginBottom: 48,
+    backBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        alignSelf: 'flex-start',
+        marginBottom: 28,
     },
-    brand: {
-        color: '#F5F500',
-        fontSize: 11,
-        fontWeight: '900',
-        letterSpacing: 4,
-        marginBottom: 20,
+    backText: {
+        fontFamily: fonts.regular,
+        fontSize: 18,
+        color: colors.inkMid,
     },
     title: {
-        color: '#FFFFFF',
-        fontSize: 58,
-        fontWeight: '900',
-        lineHeight: 60,
-        letterSpacing: -2,
-        marginBottom: 12,
+        fontFamily: fonts.bold,
+        fontSize: 48,
+        color: colors.ink,
+        lineHeight: 50,
+        letterSpacing: -0.5,
+        marginBottom: 6,
     },
-    subtitle: {
-        color: '#555',
+    card: {
+        gap: 14,
+        marginBottom: 6,
+    },
+    fieldLabel: {
+        fontFamily: fonts.bold,
         fontSize: 15,
-        fontWeight: '400',
-    },
-    form: {
-        gap: 20,
-    },
-    inputGroup: {
-        gap: 8,
-    },
-    label: {
-        color: '#444',
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 2,
-    },
-    input: {
-        backgroundColor: '#141414',
-        borderWidth: 1,
-        borderColor: '#222',
-        borderRadius: 4,
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        color: '#FFFFFF',
-        fontSize: 15,
-        fontWeight: '400',
+        color: colors.inkMid,
+        letterSpacing: 0.6,
+        textTransform: 'uppercase',
+        marginBottom: 5,
     },
     passwordRow: {
         flexDirection: 'row',
-        gap: 8,
         alignItems: 'center',
+        gap: 8,
     },
-    showBtn: {
-        backgroundColor: '#141414',
-        borderWidth: 1,
-        borderColor: '#222',
-        borderRadius: 4,
-        paddingHorizontal: 14,
-        paddingVertical: 16,
-    },
-    showBtnText: {
-        color: '#555',
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 1,
-    },
-    forgotBtn: {
-        alignSelf: 'flex-end',
-        marginTop: -8,
+    eyeBtn: {
+        padding: 9,
+        backgroundColor: colors.porcelain,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: colors.border,
     },
     forgotText: {
-        color: '#F5F500',
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 1.5,
+        fontFamily: fonts.regular,
+        fontSize: 17,
+        color: colors.accent,
+        textAlign: 'right',
     },
-    button: {
-        backgroundColor: '#F5F500',
-        borderRadius: 4,
-        paddingVertical: 18,
-        alignItems: 'center',
-    },
-    buttonDisabled: {
-        opacity: 0.5,
-    },
-    buttonText: {
-        color: '#0A0A0A',
-        fontSize: 13,
-        fontWeight: '900',
-        letterSpacing: 3,
+    cta: {
+        marginTop: 18,
+        marginBottom: 14,
     },
     divider: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 10,
+        marginBottom: 14,
     },
     dividerLine: {
         flex: 1,
         height: 1,
-        backgroundColor: '#1E1E1E',
+        backgroundColor: colors.border,
     },
     dividerText: {
-        color: '#333',
-        fontSize: 11,
-        fontWeight: '700',
-        letterSpacing: 2,
-    },
-    secondaryButton: {
-        borderRadius: 4,
-        paddingVertical: 18,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#222',
-    },
-    secondaryButtonText: {
-        color: '#555',
-        fontSize: 12,
-        fontWeight: '800',
-        letterSpacing: 2,
+        fontFamily: fonts.regular,
+        fontSize: 16,
+        color: colors.inkFaint,
     },
 });

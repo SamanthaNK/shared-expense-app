@@ -1,10 +1,15 @@
 import {
-    View, Text, StyleSheet, TextInput, TouchableOpacity,
-    KeyboardAvoidingView, Platform, StatusBar,
-    ActivityIndicator, Alert, ScrollView
+    View, Text, StyleSheet, TouchableOpacity,
+    KeyboardAvoidingView, Platform, StatusBar, ScrollView, Alert,
 } from 'react-native';
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { forgotPassword } from '../../services/authService';
+import PaperBackground from '../../components/PaperBackground';
+import PrimaryButton from '../../components/PrimaryButton';
+import StyledInput from '../../components/StyledInput';
+import StickyNoteCard from '../../components/StickyNoteCard';
+import { colors, fonts, radius } from '../../constants/theme';
 
 export default function ForgotPasswordScreen({ navigation }) {
     const [email, setEmail] = useState('');
@@ -13,190 +18,162 @@ export default function ForgotPasswordScreen({ navigation }) {
 
     const handleSubmit = async () => {
         if (!email) {
-            Alert.alert('Missing Field', 'Please enter your email address.');
+            Alert.alert('Please enter your email address.');
             return;
         }
-
         setLoading(true);
         try {
             await forgotPassword(email.trim().toLowerCase());
-            setSubmitted(true);
-        } catch (error) {
-            setSubmitted(true);
-        } finally {
+        } catch { } finally {
             setLoading(false);
+            setSubmitted(true);
         }
     };
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-            <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
-            <ScrollView
-                contentContainerStyle={styles.scroll}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
+        <PaperBackground>
+            <StatusBar barStyle="dark-content" backgroundColor={colors.paper} />
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-                <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-                    <Text style={styles.backText}>BACK</Text>
-                </TouchableOpacity>
+                <ScrollView
+                    contentContainerStyle={styles.scroll}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+                        <Ionicons name="arrow-back-outline" size={20} color={colors.inkMid} />
+                        <Text style={styles.backText}>Back</Text>
+                    </TouchableOpacity>
 
-                <View style={styles.header}>
-                    <Text style={styles.brand}>PAYBUDDY</Text>
-                    {submitted
-                        ? <Text style={styles.title}>CHECK YOUR{'\n'}EMAIL.</Text>
-                        : <Text style={styles.title}>FORGOT{'\n'}PASSWORD?</Text>
-                    }
-                </View>
+                    <Text style={styles.title}>
+                        {submitted ? 'Check your\ninbox!' : 'Forgot\npassword?'}
+                    </Text>
+                    <Text style={styles.subtitle}>
+                        {submitted
+                            ? "If that email's registered, a reset link is on its way."
+                            : 'No stress it happens to the best of us.'}
+                    </Text>
 
-                {submitted ? (
-                    <View style={styles.successContainer}>
-                        <Text style={styles.successIcon}>✉</Text>
-                        <Text style={styles.successText}>
-                            If that email is registered, we've sent a password reset link.
-                            Check your inbox — it may take a minute.
-                        </Text>
-                        <TouchableOpacity
-                            style={styles.button}
-                            onPress={() => navigation.navigate('Login')}
-                            activeOpacity={0.85}
-                        >
-                            <Text style={styles.buttonText}>BACK TO SIGN IN</Text>
-                        </TouchableOpacity>
-                    </View>
-                ) : (
-                    <View style={styles.form}>
-                        <Text style={styles.description}>
-                            Enter the email address linked to your account and we'll send you a reset link.
-                        </Text>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>EMAIL</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="your@email.com"
-                                placeholderTextColor="#333"
-                                value={email}
-                                onChangeText={setEmail}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                autoCorrect={false}
+                    {submitted ? (
+                        <StickyNoteCard style={styles.successCard}>
+                            <View style={styles.successIconWrap}>
+                                <Ionicons name="mail-outline" size={26} color={colors.success} />
+                            </View>
+                            <Text style={styles.successTitle}>Reset link sent</Text>
+                            <Text style={styles.successSub}>
+                                We sent a link to{'\n'}
+                                <Text style={{ color: colors.accent, fontFamily: fonts.bold }}>{email}</Text>
+                            </Text>
+                            <Text style={styles.successHint}>
+                                Check your spam folder if you don't see it within a minute.
+                            </Text>
+                            <PrimaryButton
+                                label="Back to Sign In"
+                                onPress={() => navigation.navigate('Login')}
+                                style={{ marginTop: 8 }}
                             />
-                        </View>
-
-                        <TouchableOpacity
-                            style={[styles.button, loading && styles.buttonDisabled]}
-                            onPress={handleSubmit}
-                            disabled={loading}
-                            activeOpacity={0.85}
-                        >
-                            {loading
-                                ? <ActivityIndicator color="#0A0A0A" />
-                                : <Text style={styles.buttonText}>SEND RESET LINK</Text>
-                            }
-                        </TouchableOpacity>
-                    </View>
-                )}
-            </ScrollView>
-        </KeyboardAvoidingView>
+                        </StickyNoteCard>
+                    ) : (
+                        <>
+                            <StickyNoteCard style={styles.card}>
+                                <StyledInput
+                                    label="Email address"
+                                    placeholder="your@email.com"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                />
+                            </StickyNoteCard>
+                            <PrimaryButton
+                                label="Send Reset Link"
+                                onPress={handleSubmit}
+                                loading={loading}
+                                style={styles.cta}
+                            />
+                        </>
+                    )}
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </PaperBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#0A0A0A'
-    },
     scroll: {
         flexGrow: 1,
-        paddingHorizontal: 28,
-        paddingTop: 60,
-        paddingBottom: 40
+        paddingHorizontal: 26,
+        paddingTop: 56,
+        paddingBottom: 40,
     },
     backBtn: {
-        marginBottom: 32
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        alignSelf: 'flex-start',
+        marginBottom: 28,
     },
     backText: {
-        color: '#444',
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 2
-    },
-    header: {
-        marginBottom: 40
-    },
-    brand: {
-        color: '#F5F500',
-        fontSize: 11,
-        fontWeight: '900',
-        letterSpacing: 4,
-        marginBottom: 20
+        fontFamily: fonts.regular,
+        fontSize: 18,
+        color: colors.inkMid,
     },
     title: {
-        color: '#FFFFFF',
-        fontSize: 52,
-        fontWeight: '900',
-        lineHeight: 54,
-        letterSpacing: -2
+        fontFamily: fonts.bold,
+        fontSize: 48,
+        color: colors.ink,
+        lineHeight: 50,
+        letterSpacing: -0.5,
+        marginBottom: 6,
     },
-    form: {
-        gap: 24
+    subtitle: {
+        fontFamily: fonts.regular,
+        fontSize: 19,
+        color: colors.inkMid,
+        marginBottom: 24,
     },
-    description: {
-        color: '#555',
-        fontSize: 14,
-        lineHeight: 22,
-        fontWeight: '400'
+    card: {
+        marginBottom: 6,
     },
-    inputGroup: {
-        gap: 8
+    cta: {
+        marginTop: 18,
     },
-    label: {
-        color: '#444',
-        fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 2
-    },
-    input: {
-        backgroundColor: '#141414',
-        borderWidth: 1,
-        borderColor: '#222',
-        borderRadius: 4,
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        color: '#FFFFFF',
-        fontSize: 15
-    },
-    button: {
-        backgroundColor: '#F5F500',
-        borderRadius: 4,
-        paddingVertical: 18,
-        alignItems: 'center'
-    },
-    buttonDisabled: {
-        opacity: 0.5
-    },
-    buttonText: {
-        color: '#0A0A0A',
-        fontSize: 13,
-        fontWeight: '900',
-        letterSpacing: 3
-    },
-    successContainer: {
-        gap: 24,
+    successCard: {
         alignItems: 'center',
-        paddingTop: 20
+        gap: 10,
+        paddingVertical: 28,
     },
-    successIcon: {
-        fontSize: 48
+    successIconWrap: {
+        width: 54,
+        height: 54,
+        borderRadius: 27,
+        backgroundColor: colors.successBg,
+        borderWidth: 1.5,
+        borderColor: colors.success,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 4,
     },
-    successText: {
-        color: '#555',
-        fontSize: 14,
-        lineHeight: 22,
+    successTitle: {
+        fontFamily: fonts.bold,
+        fontSize: 22,
+        color: colors.ink,
+    },
+    successSub: {
+        fontFamily: fonts.regular,
+        fontSize: 18,
+        color: colors.inkMid,
         textAlign: 'center',
-        fontWeight: '400'
+        lineHeight: 24,
+    },
+    successHint: {
+        fontFamily: fonts.regular,
+        fontSize: 15,
+        color: colors.inkFaint,
+        textAlign: 'center',
+        lineHeight: 20,
     },
 });

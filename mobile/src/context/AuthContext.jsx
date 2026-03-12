@@ -5,12 +5,10 @@ const AuthContext = createContext({});
 
 const TOKEN_KEY = 'jwt_token';
 const USER_KEY = 'user_data';
-const ONBOARDING_KEY = 'has_seen_onboarding';
 
 export function AuthProvider({ children }) {
     const [token, setToken] = useState(null);
     const [user, setUser] = useState(null);
-    const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -18,11 +16,8 @@ export function AuthProvider({ children }) {
             try {
                 const storedToken = await SecureStore.getItemAsync(TOKEN_KEY);
                 const storedUser = await SecureStore.getItemAsync(USER_KEY);
-                const seenOnboarding = await SecureStore.getItemAsync(ONBOARDING_KEY);
-
                 if (storedToken) setToken(storedToken);
                 if (storedUser) setUser(JSON.parse(storedUser));
-                if (seenOnboarding === 'true') setHasSeenOnboarding(true);
             } catch (e) {
                 console.warn('Failed to restore auth state:', e);
             } finally {
@@ -46,27 +41,8 @@ export function AuthProvider({ children }) {
         setUser(null);
     };
 
-    const completeOnboarding = async () => {
-        await SecureStore.setItemAsync(ONBOARDING_KEY, 'true');
-        setHasSeenOnboarding(true);
-    };
-
-    const resetOnboarding = async () => {
-        await SecureStore.deleteItemAsync(ONBOARDING_KEY);
-        setHasSeenOnboarding(false);
-    };
-
     return (
-        <AuthContext.Provider value={{
-            token,
-            user,
-            isLoading,
-            hasSeenOnboarding,
-            login,
-            logout,
-            completeOnboarding,
-            resetOnboarding,
-        }}>
+        <AuthContext.Provider value={{ token, user, isLoading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

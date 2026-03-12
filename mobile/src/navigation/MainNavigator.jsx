@@ -4,23 +4,37 @@ import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import GroupsScreen from '../screens/groups/GroupsScreen';
 import ActivityScreen from '../screens/activity/ActivityScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import { colors, fonts } from '../constants/theme';
 
 const Tab = createBottomTabNavigator();
+
+const ICONS = {
+    Dashboard: 'home-outline',
+    Groups: 'people-outline',
+    Activity: 'notifications-outline',
+    Profile: 'person-outline',
+};
 
 export default function MainNavigator() {
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
-                tabBarIcon: ({ color, size }) => {
-                    let iconName;
-                    if (route.name === 'Dashboard') iconName = 'home-outline';
-                    else if (route.name === 'Groups') iconName = 'people-outline';
-                    else if (route.name === 'Activity') iconName = 'notifications-outline';
-                    else if (route.name === 'Profile') iconName = 'person-outline';
-                    return <Ionicons name={iconName} size={size} color={color} />;
+                tabBarIcon: ({ color, size }) => (
+                    <Ionicons name={ICONS[route.name]} size={size} color={color} />
+                ),
+                tabBarActiveTintColor: colors.accent,
+                tabBarInactiveTintColor: colors.inkFaint,
+                tabBarLabelStyle: {
+                    fontFamily: fonts.regular,
+                    fontSize: 14,
                 },
-                tabBarActiveTintColor: '#4F46E5',
-                tabBarInactiveTintColor: 'gray',
+                tabBarStyle: {
+                    backgroundColor: colors.paper,
+                    borderTopColor: colors.border,
+                    borderTopWidth: 1,
+                    paddingBottom: 6,
+                    height: 58,
+                },
                 headerShown: false,
             })}
         >
