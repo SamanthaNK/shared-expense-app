@@ -35,12 +35,8 @@ export default function RegisterScreen({ navigation }) {
 
         setLoading(true);
         try {
-            const data = await registerUser(
-                name.trim(),
-                email.trim().toLowerCase(),
-                password
-            );
-            await login(data.token);
+            const data = await registerUser(name.trim(), email.trim().toLowerCase(), password);
+            await login(data.token, { name: data.name, email: data.email });
         } catch (error) {
             Alert.alert(
                 'Registration Failed',
@@ -137,12 +133,8 @@ export default function RegisterScreen({ navigation }) {
                             onChangeText={setConfirmPassword}
                             secureTextEntry={!showPassword}
                         />
-                        {passwordsMatch && (
-                            <Text style={styles.matchText}>PASSWORDS MATCH</Text>
-                        )}
-                        {passwordsMismatch && (
-                            <Text style={styles.errorText}>PASSWORDS DO NOT MATCH</Text>
-                        )}
+                        {passwordsMatch && <Text style={styles.matchText}>PASSWORDS MATCH</Text>}
+                        {passwordsMismatch && <Text style={styles.errorText}>PASSWORDS DO NOT MATCH</Text>}
                     </View>
 
                     <TouchableOpacity

@@ -23,7 +23,7 @@ export default function LoginScreen({ navigation }) {
         setLoading(true);
         try {
             const data = await loginUser(email.trim().toLowerCase(), password);
-            await login(data.token);
+            await login(data.token, { name: data.name, email: data.email });
         } catch (error) {
             Alert.alert(
                 'Login Failed',
@@ -45,14 +45,11 @@ export default function LoginScreen({ navigation }) {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
-
-                {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.brand}>PAYBUDDY</Text>
                     <Text style={styles.title}>SIGN{'\n'}IN.</Text>
                 </View>
 
-                {/* Form */}
                 <View style={styles.form}>
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>EMAIL</Text>
@@ -109,7 +106,6 @@ export default function LoginScreen({ navigation }) {
                         }
                     </TouchableOpacity>
 
-                    {/* Divider */}
                     <View style={styles.divider}>
                         <View style={styles.dividerLine} />
                         <Text style={styles.dividerText}>OR</Text>

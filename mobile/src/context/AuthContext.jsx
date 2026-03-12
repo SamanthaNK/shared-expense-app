@@ -1,14 +1,15 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { Alert } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
 const AuthContext = createContext({});
 
 const TOKEN_KEY = 'jwt_token';
+const USER_KEY = 'user_data';
 const ONBOARDING_KEY = 'has_seen_onboarding';
 
 export function AuthProvider({ children }) {
     const [token, setToken] = useState(null);
+    const [user, setUser] = useState(null);
     const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -16,11 +17,14 @@ export function AuthProvider({ children }) {
         const bootstrap = async () => {
             try {
                 const storedToken = await SecureStore.getItemAsync(TOKEN_KEY);
+                const storedUser = await SecureStore.getItemAsync(USER_KEY);
                 const seenOnboarding = await SecureStore.getItemAsync(ONBOARDING_KEY);
+
                 if (storedToken) setToken(storedToken);
+                if (storedUser) setUser(JSON.parse(storedUser));
                 if (seenOnboarding === 'true') setHasSeenOnboarding(true);
             } catch (e) {
-                console.warn('Failed to load auth state from storage', e);
+                console.warn('Failed to restore auth state:', e);
             } finally {
                 setIsLoading(false);
             }
@@ -28,14 +32,18 @@ export function AuthProvider({ children }) {
         bootstrap();
     }, []);
 
-    const login = async (newToken) => {
+    const login = async (newToken, userData) => {
         await SecureStore.setItemAsync(TOKEN_KEY, newToken);
+        await SecureStore.setItemAsync(USER_KEY, JSON.stringify(userData));
         setToken(newToken);
+        setUser(userData);
     };
 
     const logout = async () => {
         await SecureStore.deleteItemAsync(TOKEN_KEY);
+        await SecureStore.deleteItemAsync(USER_KEY);
         setToken(null);
+        setUser(null);
     };
 
     const completeOnboarding = async () => {
@@ -49,7 +57,16 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ token, isLoading, hasSeenOnboarding, login, logout, completeOnboarding, resetOnboarding }}>
+        <AuthContext.Provider value={{
+            token,
+            user,
+            isLoading,
+            hasSeenOnboarding,
+            login,
+            logout,
+            completeOnboarding,
+            resetOnboarding,
+        }}>
             {children}
         </AuthContext.Provider>
     );
