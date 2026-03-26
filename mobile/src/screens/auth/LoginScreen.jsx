@@ -10,6 +10,7 @@ import PaperBackground from '../../components/PaperBackground';
 import PrimaryButton from '../../components/PrimaryButton';
 import StyledInput from '../../components/StyledInput';
 import StickyNoteCard from '../../components/StickyNoteCard';
+import CaptchaModal from '../../components/CaptchaModal';
 import { colors, fonts } from '../../constants/theme';
 
 export default function LoginScreen({ navigation }) {
@@ -17,21 +18,32 @@ export default function LoginScreen({ navigation }) {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [captchaVisible, setCaptchaVisible] = useState(false);
+
     const { login } = useAuth();
 
-    const handleLogin = async () => {
+    const handleLogin = () => {
         if (!email || !password) {
             Alert.alert('Please fill in all fields.');
             return;
         }
+        setCaptchaVisible(true);
+    };
+
+    const handleCaptchaVerified = async (captchaToken) => {
+        setCaptchaVisible(false);
         setLoading(true);
         try {
-            const data = await loginUser(email.trim().toLowerCase(), password);
+            const data = await loginUser(
+                email.trim().toLowerCase(),
+                password,
+                captchaToken,
+            );
             await login(data.token, { name: data.name, email: data.email });
         } catch (error) {
             Alert.alert(
                 'Login failed',
-                error.response?.data?.message || 'Something went wrong. Please try again.'
+                error.response?.data?.message || 'Something went wrong. Please try again.',
             );
         } finally {
             setLoading(false);
@@ -41,6 +53,13 @@ export default function LoginScreen({ navigation }) {
     return (
         <PaperBackground>
             <StatusBar barStyle="dark-content" backgroundColor={colors.paper} />
+
+            <CaptchaModal
+                visible={captchaVisible}
+                onVerify={handleCaptchaVerified}
+                onCancel={() => setCaptchaVisible(false)}
+            />
+
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -125,19 +144,19 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         paddingHorizontal: 26,
         paddingTop: 56,
-        paddingBottom: 40,
+        paddingBottom: 40
     },
     backBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
         alignSelf: 'flex-start',
-        marginBottom: 28,
+        marginBottom: 28
     },
     backText: {
         fontFamily: fonts.regular,
         fontSize: 18,
-        color: colors.inkMid,
+        color: colors.inkMid
     },
     title: {
         fontFamily: fonts.bold,
@@ -145,11 +164,11 @@ const styles = StyleSheet.create({
         color: colors.ink,
         lineHeight: 50,
         letterSpacing: -0.5,
-        marginBottom: 6,
+        marginBottom: 6
     },
     card: {
         gap: 14,
-        marginBottom: 6,
+        marginBottom: 6
     },
     fieldLabel: {
         fontFamily: fonts.bold,
@@ -157,44 +176,43 @@ const styles = StyleSheet.create({
         color: colors.inkMid,
         letterSpacing: 0.6,
         textTransform: 'uppercase',
-        marginBottom: 5,
+        marginBottom: 5
     },
     passwordRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: 8
     },
     eyeBtn: {
         padding: 9,
         backgroundColor: colors.porcelain,
         borderRadius: 12,
         borderWidth: 1.5,
-        borderColor: colors.border,
+        borderColor: colors.border
     },
     forgotText: {
         fontFamily: fonts.regular,
         fontSize: 17,
         color: colors.accent,
-        textAlign: 'right',
+        textAlign: 'right'
     },
     cta: {
         marginTop: 18,
-        marginBottom: 14,
+        marginBottom: 14
     },
     divider: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
-        marginBottom: 14,
+        marginBottom: 14
     },
     dividerLine: {
-        flex: 1,
-        height: 1,
-        backgroundColor: colors.border,
+        flex: 1, height: 1,
+        backgroundColor: colors.border
     },
     dividerText: {
         fontFamily: fonts.regular,
         fontSize: 16,
-        color: colors.inkFaint,
+        color: colors.inkFaint
     },
 });

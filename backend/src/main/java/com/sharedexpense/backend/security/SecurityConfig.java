@@ -28,11 +28,11 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/auth/register",
-                                "/api/v1/auth/login",
-                                "/api/v1/auth/logout",
-                                "/api/v1/auth/forgot-password",
-                                "/api/v1/auth/reset-password",
+                                "/api/auth/register",
+                                "/api/auth/login",
+                                "/api/auth/logout",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
                                 // Swagger UI
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",

@@ -2,78 +2,80 @@ import {
     View, Text, StyleSheet, TouchableOpacity,
     KeyboardAvoidingView, Platform, StatusBar, ScrollView, Alert,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../context/AuthContext';
-import { registerUser } from '../../services/authService';
+import { resetPassword } from '../../services/authService';
 import PaperBackground from '../../components/PaperBackground';
 import PrimaryButton from '../../components/PrimaryButton';
 import StyledInput from '../../components/StyledInput';
 import StickyNoteCard from '../../components/StickyNoteCard';
-import CaptchaModal from '../../components/CaptchaModal';
 import { colors, fonts } from '../../constants/theme';
 
-export default function RegisterScreen({ navigation }) {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+export default function ResetPasswordScreen({ navigation, route }) {
+    const [token, setToken] = useState(route?.params?.token ?? '');
+    const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [captchaVisible, setCaptchaVisible] = useState(false);
+    const [success, setSuccess] = useState(false);
 
-    const { login } = useAuth();
+    const passwordsMatch = confirmPassword.length > 0 && newPassword === confirmPassword;
+    const passwordsMismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
 
-    const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
-    const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
-
-    const handleRegister = () => {
-        if (!name || !email || !password || !confirmPassword) {
+    const handleReset = async () => {
+        if (!token.trim()) {
+            Alert.alert('Missing token', 'Please paste your reset token.');
+            return;
+        }
+        if (!newPassword || !confirmPassword) {
             Alert.alert('Please fill in all fields.');
             return;
         }
-        if (password !== confirmPassword) {
-            Alert.alert('Password mismatch', 'Your passwords do not match.');
+        if (newPassword !== confirmPassword) {
+            Alert.alert('Passwords do not match.');
             return;
         }
-        if (password.length < 8) {
+        if (newPassword.length < 8) {
             Alert.alert('Password too short', 'Password must be at least 8 characters.');
             return;
         }
-        setCaptchaVisible(true);
-    };
 
-    const handleCaptchaVerified = async (captchaToken) => {
-        setCaptchaVisible(false);
         setLoading(true);
         try {
-            const data = await registerUser(
-                name.trim(),
-                email.trim().toLowerCase(),
-                password,
-                captchaToken,
-            );
-            await login(data.token, { name: data.name, email: data.email });
+            await resetPassword(token.trim(), newPassword);
+            setSuccess(true);
         } catch (error) {
-            Alert.alert(
-                'Registration failed',
-                error.response?.data?.message || 'Something went wrong. Please try again.',
-            );
+            const msg = error.response?.data?.message ?? 'Something went wrong.';
+            Alert.alert('Reset failed', msg);
         } finally {
             setLoading(false);
         }
     };
 
+    if (success) {
+        return (
+            <PaperBackground>
+                <View style={styles.successContainer}>
+                    <View style={styles.successIconWrap}>
+                        <Ionicons name="checkmark-outline" size={30} color={colors.success} />
+                    </View>
+                    <Text style={styles.successTitle}>Password updated!</Text>
+                    <Text style={styles.successSub}>
+                        You can now log in with your new password.
+                    </Text>
+                    <PrimaryButton
+                        label="Go to Sign In"
+                        onPress={() => navigation.navigate('Login')}
+                        style={{ marginTop: 24, width: '80%' }}
+                    />
+                </View>
+            </PaperBackground>
+        );
+    }
+
     return (
         <PaperBackground>
             <StatusBar barStyle="dark-content" backgroundColor={colors.paper} />
-
-            <CaptchaModal
-                visible={captchaVisible}
-                onVerify={handleCaptchaVerified}
-                onCancel={() => setCaptchaVisible(false)}
-            />
-
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -88,34 +90,30 @@ export default function RegisterScreen({ navigation }) {
                         <Text style={styles.backText}>Back</Text>
                     </TouchableOpacity>
 
-                    <Text style={styles.title}>Create{'\n'}account.</Text>
+                    <Text style={styles.title}>Set new{'\n'}password.</Text>
+                    <Text style={styles.subtitle}>
+                        Paste the reset token from your email, then choose a new password.
+                    </Text>
 
                     <StickyNoteCard style={styles.card}>
-                        <StyledInput
-                            label="Full Name"
-                            placeholder="Your name"
-                            value={name}
-                            onChangeText={setName}
-                            autoCapitalize="words"
-                        />
-
-                        <StyledInput
-                            label="Email"
-                            placeholder="your@email.com"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                        />
+                        {!route?.params?.token && (
+                            <StyledInput
+                                label="Reset Token"
+                                placeholder="Paste token from email"
+                                value={token}
+                                onChangeText={setToken}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                            />
+                        )}
 
                         <View>
-                            <Text style={styles.fieldLabel}>Password</Text>
+                            <Text style={styles.fieldLabel}>New Password</Text>
                             <View style={styles.passwordRow}>
                                 <StyledInput
                                     placeholder="Min 8 characters"
-                                    value={password}
-                                    onChangeText={setPassword}
+                                    value={newPassword}
+                                    onChangeText={setNewPassword}
                                     secureTextEntry={!showPassword}
                                     style={{ flex: 1 }}
                                 />
@@ -151,18 +149,11 @@ export default function RegisterScreen({ navigation }) {
                     </StickyNoteCard>
 
                     <PrimaryButton
-                        label="Create Account"
-                        onPress={handleRegister}
+                        label="Update Password"
+                        onPress={handleReset}
                         loading={loading}
                         style={styles.cta}
                     />
-
-                    <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
-                        <Text style={styles.loginLinkText}>
-                            Already have an account?{' '}
-                            <Text style={styles.loginLinkAccent}>Sign In</Text>
-                        </Text>
-                    </TouchableOpacity>
                 </ScrollView>
             </KeyboardAvoidingView>
         </PaperBackground>
@@ -196,6 +187,12 @@ const styles = StyleSheet.create({
         letterSpacing: -0.5,
         marginBottom: 6
     },
+    subtitle: {
+        fontFamily: fonts.regular,
+        fontSize: 17,
+        color: colors.inkMid,
+        marginBottom: 24
+    },
     card: {
         gap: 14,
         marginBottom: 6
@@ -221,20 +218,35 @@ const styles = StyleSheet.create({
         borderColor: colors.border
     },
     cta: {
-        marginTop: 18,
-        marginBottom: 14
+        marginTop: 18
     },
-    loginLink: {
+    successContainer: {
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 4
+        paddingHorizontal: 32
     },
-    loginLinkText: {
+    successIconWrap: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: colors.successBg,
+        borderWidth: 2,
+        borderColor: colors.success,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+    },
+    successTitle: {
+        fontFamily: fonts.bold,
+        fontSize: 30,
+        color: colors.ink,
+        marginBottom: 8
+    },
+    successSub: {
         fontFamily: fonts.regular,
         fontSize: 18,
-        color: colors.inkMid
-    },
-    loginLinkAccent: {
-        fontFamily: fonts.bold,
-        color: colors.accent
+        color: colors.inkMid,
+        textAlign: 'center'
     },
 });
